@@ -9,11 +9,15 @@ import Foundation
 import UIKit
 
 class TodoListViewController: UITableViewController {
-    
-    var itemArray = ["Find mike", "buy eggs", "Call amiras"]
+    let itemArrayKey = "itemArrayKey"
+    var itemArray = [Item]()
+    let defaults = UserDefaults.standard
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        if let itemArray = retrieveItems() {
+            self.itemArray = itemArray
+        }
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -22,14 +26,18 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row]
+        let item = itemArray[indexPath.row]
+        cell.textLabel?.text = item.title
+        cell.accessoryType = item.isDone ? .checkmark : .none
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        let isSelected = tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark
-        tableView.cellForRow(at: indexPath)?.accessoryType = isSelected ? .none : .checkmark
+        let selectedItem = itemArray[indexPath.row]
+        selectedItem.isDone = !selectedItem.isDone
+        storeItems(items: itemArray)
+        tableView.cellForRow(at: indexPath)?.accessoryType = selectedItem.isDone ? .checkmark : .none
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -37,7 +45,8 @@ class TodoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add new todo item", message: nil, preferredStyle: .alert)
         let action = UIAlertAction(title: "Add item", style: .default) { [weak self] (action) in
             if let newTodo = textField.text, !newTodo.isEmpty {
-                self?.itemArray.append(newTodo)
+                self?.itemArray.append(Item(title: newTodo))
+                self?.storeItems(items: self?.itemArray ?? [])
                 self?.tableView.reloadData()
             }
         }
@@ -49,6 +58,31 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true)
     }
     
+    
+    func retrieveItems() -> [Item]? {
+        var items: [Item]?
+        if let encodedData = UserDefaults.standard.data(forKey: itemArrayKey) {
+            do {
+                let decoder = JSONDecoder()
+                items = try decoder.decode([Item].self, from: encodedData)
+            } catch {
+                print("Error decoding data: \(error)")
+            }
+        }
+        return items
+    }
+    
+    func storeItems(items: [Item]) {
+        do {
+            let encoder = JSONEncoder()
+            let encodedData = try encoder.encode(items)
+            
+            // Store the encoded array in UserDefaults
+            UserDefaults.standard.set(encodedData, forKey: itemArrayKey)
+        } catch {
+            print("Error encoding data: \(error)")
+        }
+    }
     
     
 }
