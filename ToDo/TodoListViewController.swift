@@ -9,12 +9,12 @@ import Foundation
 import UIKit
 
 class TodoListViewController: UITableViewController {
-    let itemArrayKey = "itemArrayKey"
     var itemArray = [Item]()
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appending(path: "Items.plist")
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         if let itemArray = retrieveItems() {
             self.itemArray = itemArray
         }
@@ -61,9 +61,9 @@ class TodoListViewController: UITableViewController {
     
     func retrieveItems() -> [Item]? {
         var items: [Item]?
-        if let encodedData = UserDefaults.standard.data(forKey: itemArrayKey) {
+        if let encodedData = try? Data(contentsOf: dataFilePath!) {
             do {
-                let decoder = JSONDecoder()
+                let decoder = PropertyListDecoder()
                 items = try decoder.decode([Item].self, from: encodedData)
             } catch {
                 print("Error decoding data: \(error)")
@@ -73,12 +73,10 @@ class TodoListViewController: UITableViewController {
     }
     
     func storeItems(items: [Item]) {
+        let encoder = PropertyListEncoder()
         do {
-            let encoder = JSONEncoder()
             let encodedData = try encoder.encode(items)
-            
-            // Store the encoded array in UserDefaults
-            UserDefaults.standard.set(encodedData, forKey: itemArrayKey)
+            try encodedData.write(to: dataFilePath!)
         } catch {
             print("Error encoding data: \(error)")
         }
