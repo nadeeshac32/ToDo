@@ -10,10 +10,10 @@
 		305A8ACD8D6ED5B489BFBE4B /* Pods_ToDo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 59E2910B668E88F1E360422E /* Pods_ToDo.framework */; };
 		C97A32BF2B7DB849006840DF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97A32BE2B7DB849006840DF /* AppDelegate.swift */; };
 		C97A32C12B7DB849006840DF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97A32C02B7DB849006840DF /* SceneDelegate.swift */; };
-		C97A32C32B7DB849006840DF /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97A32C22B7DB849006840DF /* ViewController.swift */; };
 		C97A32C62B7DB849006840DF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C97A32C42B7DB849006840DF /* Main.storyboard */; };
 		C97A32C82B7DB84A006840DF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C97A32C72B7DB84A006840DF /* Assets.xcassets */; };
 		C97A32CB2B7DB84A006840DF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C97A32C92B7DB84A006840DF /* LaunchScreen.storyboard */; };
+		C97A32D32B7DBE63006840DF /* TodoListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97A32D22B7DBE63006840DF /* TodoListViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,11 +23,11 @@
 		C97A32BB2B7DB849006840DF /* ToDo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToDo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C97A32BE2B7DB849006840DF /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C97A32C02B7DB849006840DF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		C97A32C22B7DB849006840DF /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		C97A32C52B7DB849006840DF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C97A32C72B7DB84A006840DF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C97A32CA2B7DB84A006840DF /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C97A32CC2B7DB84A006840DF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C97A32D22B7DBE63006840DF /* TodoListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +48,6 @@
 				C632112B54B900AEDEBF2259 /* Pods-ToDo.debug.xcconfig */,
 				16536DB93F88FA8856C52914 /* Pods-ToDo.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -75,11 +74,11 @@
 			children = (
 				C97A32BE2B7DB849006840DF /* AppDelegate.swift */,
 				C97A32C02B7DB849006840DF /* SceneDelegate.swift */,
-				C97A32C22B7DB849006840DF /* ViewController.swift */,
 				C97A32C42B7DB849006840DF /* Main.storyboard */,
 				C97A32C72B7DB84A006840DF /* Assets.xcassets */,
 				C97A32C92B7DB84A006840DF /* LaunchScreen.storyboard */,
 				C97A32CC2B7DB84A006840DF /* Info.plist */,
+				C97A32D22B7DBE63006840DF /* TodoListViewController.swift */,
 			);
 			path = ToDo;
 			sourceTree = "<group>";
@@ -189,7 +188,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C97A32C32B7DB849006840DF /* ViewController.swift in Sources */,
+				C97A32D32B7DBE63006840DF /* TodoListViewController.swift in Sources */,
 				C97A32BF2B7DB849006840DF /* AppDelegate.swift in Sources */,
 				C97A32C12B7DB849006840DF /* SceneDelegate.swift in Sources */,
 			);
