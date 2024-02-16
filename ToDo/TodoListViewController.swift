@@ -5,12 +5,12 @@
 //  Created by Nadeesha Chandrapala on 15/02/2024.
 //
 
-import Foundation
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     var itemArray = [Item]()
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appending(path: "Items.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,9 +34,12 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        
         let selectedItem = itemArray[indexPath.row]
+//        context.delete(selectedItem)
+//        itemArray.remove(at: indexPath.row)
         selectedItem.isDone = !selectedItem.isDone
-        storeItems(items: itemArray)
+        saveItems()
         tableView.cellForRow(at: indexPath)?.accessoryType = selectedItem.isDone ? .checkmark : .none
     }
     
@@ -44,10 +47,16 @@ class TodoListViewController: UITableViewController {
         var textField = UITextField()
         let alert = UIAlertController(title: "Add new todo item", message: nil, preferredStyle: .alert)
         let action = UIAlertAction(title: "Add item", style: .default) { [weak self] (action) in
+            guard let self = self else { return }
             if let newTodo = textField.text, !newTodo.isEmpty {
-                self?.itemArray.append(Item(title: newTodo))
-                self?.storeItems(items: self?.itemArray ?? [])
-                self?.tableView.reloadData()
+                
+                let item = Item(context: context)
+                item.title = newTodo
+                item.isDone = false
+        
+                self.itemArray.append(item)
+                self.saveItems()
+                self.tableView.reloadData()
             }
         }
         alert.addTextField { (alertTextField) in
@@ -59,28 +68,51 @@ class TodoListViewController: UITableViewController {
     }
     
     
-    func retrieveItems() -> [Item]? {
+    func retrieveItems(searchText: String? = nil) -> [Item]? {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        if let searchText = searchText {
+            let predicate: NSPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchText)
+            let sortDescriptor: NSSortDescriptor = NSSortDescriptor(key: "title", ascending: true)
+            request.predicate = predicate
+            request.sortDescriptors = [sortDescriptor]
+        }
         var items: [Item]?
-        if let encodedData = try? Data(contentsOf: dataFilePath!) {
-            do {
-                let decoder = PropertyListDecoder()
-                items = try decoder.decode([Item].self, from: encodedData)
-            } catch {
-                print("Error decoding data: \(error)")
-            }
+        do {
+            items = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
         }
         return items
     }
     
-    func storeItems(items: [Item]) {
-        let encoder = PropertyListEncoder()
+    func saveItems() {
         do {
-            let encodedData = try encoder.encode(items)
-            try encodedData.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding data: \(error)")
+            print("Error saving context: \(error)")
         }
     }
     
+}
+
+extension TodoListViewController: UISearchBarDelegate {
     
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        if let items = retrieveItems(searchText: searchBar.text) {
+            itemArray = items
+            tableView.reloadData()
+        }
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            if let items = retrieveItems() {
+                itemArray = items
+                tableView.reloadData()
+            }
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+    }
 }
