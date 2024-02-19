@@ -12,12 +12,16 @@ class TodoListViewController: UITableViewController {
     var itemArray = [Item]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    var selectedCategory: Category? {
+        didSet {
+            if let itemArray = retrieveItems() {
+                self.itemArray = itemArray
+            }
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if let itemArray = retrieveItems() {
-            self.itemArray = itemArray
-        }
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -53,7 +57,7 @@ class TodoListViewController: UITableViewController {
                 let item = Item(context: context)
                 item.title = newTodo
                 item.isDone = false
-        
+                item.parentCategory = selectedCategory
                 self.itemArray.append(item)
                 self.saveItems()
                 self.tableView.reloadData()
@@ -70,11 +74,16 @@ class TodoListViewController: UITableViewController {
     
     func retrieveItems(searchText: String? = nil) -> [Item]? {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
+        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
+        
         if let searchText = searchText {
             let predicate: NSPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchText)
             let sortDescriptor: NSSortDescriptor = NSSortDescriptor(key: "title", ascending: true)
-            request.predicate = predicate
+            
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, predicate])
             request.sortDescriptors = [sortDescriptor]
+        } else {
+            request.predicate = categoryPredicate
         }
         var items: [Item]?
         do {

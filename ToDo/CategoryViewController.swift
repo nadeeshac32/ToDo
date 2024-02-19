@@ -6,90 +6,112 @@
 //
 
 import UIKit
+import CoreData
 
 class CategoryViewController: UITableViewController {
-
-    //CategoryCell
+    var categoryArray = [Category]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+        
+        if let categoryArray = retrieveCategories() {
+            self.categoryArray = categoryArray
+        }
     }
-
-    // MARK: - Table view data source
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
-    }
-
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+        return categoryArray.count
+    }
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        let item = categoryArray[indexPath.row]
+        cell.textLabel?.text = item.name
+        cell.accessoryType = .disclosureIndicator
+        return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        performSegue(withIdentifier: "goToItems", sender: self)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let destinationVC = segue.destination as? TodoListViewController, let indexPath = tableView.indexPathForSelectedRow {
+            tableView.deselectRow(at: indexPath, animated: true)
+            destinationVC.selectedCategory = categoryArray[indexPath.row]
+        }
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
-        
+        var textField = UITextField()
+        let alert = UIAlertController(title: "Add new Category", message: nil, preferredStyle: .alert)
+        let action = UIAlertAction(title: "Add Category", style: .default) { [weak self] (action) in
+            guard let self = self else { return }
+            if let newCategory = textField.text, !newCategory.isEmpty {
+                
+                let category = Category(context: context)
+                category.name = newCategory
+                self.categoryArray.append(category)
+                self.saveCategories()
+                self.tableView.reloadData()
+            }
+        }
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new category"
+            textField = alertTextField
+        }
+        alert.addAction(action)
+        present(alert, animated: true)
+    }
+
+    func retrieveCategories(searchText: String? = nil) -> [Category]? {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        if let searchText = searchText {
+            let predicate: NSPredicate = NSPredicate(format: "name CONTAINS[cd] %@", searchText)
+            let sortDescriptor: NSSortDescriptor = NSSortDescriptor(key: "name", ascending: true)
+            request.predicate = predicate
+            request.sortDescriptors = [sortDescriptor]
+        }
+        var categories: [Category]?
+        do {
+            categories = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error)")
+        }
+        return categories
     }
     
-    /*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
-        return cell
+    func saveCategories() {
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error)")
+        }
     }
-    */
+    
+}
 
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+
+extension CategoryViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        if let categories = retrieveCategories(searchText: searchBar.text) {
+            categoryArray = categories
+            tableView.reloadData()
+        }
     }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            if let categories = retrieveCategories() {
+                categoryArray = categories
+                tableView.reloadData()
+            }
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
-    }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    
 }
