@@ -6,12 +6,11 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class TodoListViewController: UITableViewController {
-    var itemArray = [Item]()
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    
+    let realm = try! Realm()
+    var itemArray: Results<Item>?
     var selectedCategory: Category? {
         didSet {
             if let itemArray = retrieveItems() {
@@ -25,26 +24,31 @@ class TodoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return itemArray.count
+        return itemArray?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
-        let item = itemArray[indexPath.row]
-        cell.textLabel?.text = item.title
-        cell.accessoryType = item.isDone ? .checkmark : .none
+        let item = itemArray?[indexPath.row]
+        cell.textLabel?.text = item?.title ?? "No Items Added Yet!"
+        cell.accessoryType = item?.isDone == true ? .checkmark : .none
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let selectedItem = itemArray[indexPath.row]
-//        context.delete(selectedItem)
-//        itemArray.remove(at: indexPath.row)
-        selectedItem.isDone = !selectedItem.isDone
-        saveItems()
-        tableView.cellForRow(at: indexPath)?.accessoryType = selectedItem.isDone ? .checkmark : .none
+        if let selectedItem = itemArray?[indexPath.row] {
+            do {
+                try realm.write({
+                      //    realm.delete(selectedItem)
+                    selectedItem.isDone = !selectedItem.isDone
+                })
+            } catch {
+                print("Error Saving new item: \(error)")
+            }
+            tableView.cellForRow(at: indexPath)?.accessoryType = selectedItem.isDone ? .checkmark : .none
+        }
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -52,14 +56,17 @@ class TodoListViewController: UITableViewController {
         let alert = UIAlertController(title: "Add new todo item", message: nil, preferredStyle: .alert)
         let action = UIAlertAction(title: "Add item", style: .default) { [weak self] (action) in
             guard let self = self else { return }
-            if let newTodo = textField.text, !newTodo.isEmpty {
-                
-                let item = Item(context: context)
-                item.title = newTodo
-                item.isDone = false
-                item.parentCategory = selectedCategory
-                self.itemArray.append(item)
-                self.saveItems()
+            if let newTodo = textField.text, !newTodo.isEmpty, let currentCategory = self.selectedCategory {
+                do {
+                    try realm.write({
+                        let item = Item()
+                        item.title = newTodo
+                        item.dateCreated = Date()
+                        currentCategory.items.append(item)
+                    })
+                } catch {
+                    print("Error Saving new item: \(error)")
+                }
                 self.tableView.reloadData()
             }
         }
@@ -72,34 +79,11 @@ class TodoListViewController: UITableViewController {
     }
     
     
-    func retrieveItems(searchText: String? = nil) -> [Item]? {
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
-        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
-        
+    func retrieveItems(searchText: String? = nil) -> Results<Item>? {
         if let searchText = searchText {
-            let predicate: NSPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchText)
-            let sortDescriptor: NSSortDescriptor = NSSortDescriptor(key: "title", ascending: true)
-            
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, predicate])
-            request.sortDescriptors = [sortDescriptor]
-        } else {
-            request.predicate = categoryPredicate
+            return selectedCategory?.items.filter("title CONTAINS[cd] %@", searchText).sorted(byKeyPath: "dateCreated", ascending: true)
         }
-        var items: [Item]?
-        do {
-            items = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error)")
-        }
-        return items
-    }
-    
-    func saveItems() {
-        do {
-            try context.save()
-        } catch {
-            print("Error saving context: \(error)")
-        }
+        return selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
     }
     
 }

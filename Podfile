@@ -6,5 +6,5 @@ target 'ToDo' do
   use_frameworks!
 
   # Pods for ToDo
-
+  pod 'RealmSwift', '~>10'
 end
